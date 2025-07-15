@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sudoku Generator</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f9f9f9;
+      color: #333;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 {
+      margin: 10px 0;
+      font-size: 2rem;
+    }
+
+    .meta {
+      margin-bottom: 15px;
+      font-size: 0.95rem;
+      color: #555;
+    }
+
+    .controls {
+      margin-bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      align-items: center;
+    }
+
+    select, button {
+      padding: 8px 12px;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      background-color: #fff;
+    }
+
+    button:hover {
+      background-color: #eaeaea;
+      cursor: pointer;
+    }
+
+    .sudoku-board {
+      display: grid;
+      grid-template-columns: repeat(9, 40px);
+      grid-template-rows: repeat(9, 40px);
+      gap: 1px;
+      border: 2px solid #999;
+    }
+
+    .cell {
+      width: 40px;
+      height: 40px;
+      text-align: center;
+      line-height: 40px;
+      font-size: 18px;
+      background-color: #fff;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+
+    .cell.block {
+      background-color: #f1f1f1;
+    }
+
+    @media (max-width: 450px) {
+      .sudoku-board {
+        transform: scale(0.8);
+        transform-origin: top center;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Sudoku Generator</h1>
+  <div class="meta" id="date">📅</div>
+
+  <div class="controls">
+    <label for="difficulty">Difficulty:</label>
+    <select id="difficulty">
+      <option value="easy">Easy</option>
+      <option value="medium">Medium</option>
+      <option value="hard">Hard</option>
+      <option value="expert">Expert</option>
+      <option value="evil">Evil</option>
+    </select>
+    <button onclick="generateSudoku()">Generate New Puzzle</button>
+  </div>
+
+  <div class="sudoku-board" id="board"></div>
+
+  <script>
+    const boardElement = document.getElementById('board');
+
+    function createEmptyBoard() {
+      boardElement.innerHTML = '';
+      for (let i = 0; i < 81; i++) {
+        const cell = document.createElement('div');
+        cell.classList.add('cell');
+        const row = Math.floor(i / 9);
+        const col = i % 9;
+        if (Math.floor(row / 3) % 2 === Math.floor(col / 3) % 2) {
+          cell.classList.add('block');
+        }
+        boardElement.appendChild(cell);
+      }
+    }
+
+    function isSafe(board, row, col, num) {
+      for (let x = 0; x < 9; x++) {
+        if (board[row][x] === num || board[x][col] === num) return false;
+      }
+      const startRow = row - (row % 3);
+      const startCol = col - (col % 3);
+      for (let i = 0; i < 3; i++) {
+        for (let j = 0; j < 3; j++) {
+          if (board[startRow + i][startCol + j] === num) return false;
+        }
+      }
+      return true;
+    }
+
+    function solveBoard(board) {
+      for (let row = 0; row < 9; row++) {
+        for (let col = 0; col < 9; col++) {
+          if (board[row][col] === 0) {
+            let nums = [1,2,3,4,5,6,7,8,9];
+            nums.sort(() => Math.random() - 0.5); // 랜덤성 부여
+            for (let num of nums) {
+              if (isSafe(board, row, col, num)) {
+                board[row][col] = num;
+                if (solveBoard(board)) return true;
+                board[row][col] = 0;
+              }
+            }
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+
+    function generateFullBoard() {
+      const board = Array.from({ length: 9 }, () => Array(9).fill(0));
+      solveBoard(board);
+      return board;
+    }
+
+    function removeCells(board, clues = 35) {
+      const newBoard = board.map(row => row.slice());
+      let count = 81 - clues;
+      while (count > 0) {
+        const row = Math.floor(Math.random() * 9);
+        const col = Math.floor(Math.random() * 9);
+        if (newBoard[row][col] !== 0) {
+          newBoard[row][col] = 0;
+          count--;
+        }
+      }
+      return newBoard;
+    }
+
+    function renderBoard(board) {
+      const cells = document.querySelectorAll('.cell');
+      for (let i = 0; i < 81; i++) {
+        const row = Math.floor(i / 9);
+        const col = i % 9;
+        const val = board[row][col];
+        cells[i].textContent = val !== 0 ? val : '';
+      }
+    }
+
+    function boardToString(board) {
+      return board.flat().map(v => v.toString()).join('');
+    }
+
+    function stringToBoard(str) {
+      const nums = str.split('').map(Number);
+      const board = [];
+      for (let i = 0; i < 9; i++) {
+        board.push(nums.slice(i * 9, i * 9 + 9));
+      }
+      return board;
+    }
+
+    function updateURL(board, difficulty) {
+      const puzzleStr = boardToString(board);
+      const url = new URL(window.location.href);
+      url.searchParams.set('puzzle', puzzleStr);
+      url.searchParams.set('difficulty', difficulty);
+      history.replaceState(null, '', url);
+    }
+
+    function getClueCount(difficulty) {
+      switch (difficulty) {
+        case 'easy': return 40;
+        case 'medium': return 32;
+        case 'hard': return 25;
+        case 'expert': return 20;
+        case 'evil': return 17;
+        default: return 35;
+      }
+    }
+
+    function displayToday() {
+      const today = new Date().toISOString().slice(0, 10);
+      document.getElementById('date').textContent = `📅 Today's Puzzle: ${today}`;
+    }
+
+    function loadPuzzleFromQuery() {
+      const params = new URLSearchParams(window.location.search);
+      const puzzleStr = params.get('puzzle');
+      const difficulty = params.get('difficulty') || 'easy';
+
+      document.getElementById('difficulty').value = difficulty;
+
+      if (puzzleStr && puzzleStr.length === 81) {
+        const board = stringToBoard(puzzleStr);
+        createEmptyBoard();
+        renderBoard(board);
+        displayToday();
+        return true;
+      }
+      return false;
+    }
+
+    function generateSudoku() {
+      const difficulty = document.getElementById('difficulty').value;
+      const full = generateFullBoard();
+      const clues = getClueCount(difficulty);
+      const puzzle = removeCells(full, clues);
+      createEmptyBoard();
+      renderBoard(puzzle);
+      updateURL(puzzle, difficulty);
+      displayToday();
+    }
+
+    // 초기 로딩
+    window.addEventListener('DOMContentLoaded', () => {
+      if (!loadPuzzleFromQuery()) {
+        generateSudoku();
+      }
+    });
+  </script>
+</body>
+</html>
