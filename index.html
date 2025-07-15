@@ -5,156 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>스도쿠 생성기</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f5f6fa;
-      color: #333;
-      margin: 0;
-      padding: 2rem;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    h1 {
-      margin-bottom: 0.5rem;
-    }
-
-    .meta {
-      margin-bottom: 1rem;
-      color: #666;
-    }
-
-    .controls {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 1.5rem;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-
-    select,
-    button {
-      padding: 0.5rem 1rem;
-      font-size: 1rem;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      background-color: #fff;
-      transition: all 0.2s;
-    }
-
-    button:hover {
-      background-color: #eee;
-    }
-
-    .sudoku-board {
-      display: grid;
-      grid-template-columns: repeat(9, 50px);
-      grid-template-rows: repeat(9, 50px);
-      gap: 1px;
-      border: 2px solid #666;
-    }
-
-    .cell {
-      width: 50px;
-      height: 50px;
-      border: 1px solid #999;
-      text-align: center;
-      vertical-align: middle;
-      font-size: 22px;
-      box-sizing: border-box;
-      position: relative;
-      user-select: none;
-      background-color: #fff;
-      color: #000;
-      cursor: pointer;
-    }
-
-    .cell.block-light {
-      background-color: #e1e1e1;
-      /* 밝은 회색 블록 */
-    }
-
-    .cell.block-dark {
-      background-color: #ffffff;
-      /* 흰색 블록 */
-    }
-
-    .cell.fixed {
-      font-weight: bold;
-      color: #000;
-      pointer-events: none;
-    }
-
-    .cell.user-input {
-      background-color: #fff9db;
-      /* 밝은 노란색 */
-      color: #7a5901;
-      /* 진한 갈색 */
-    }
-
-    .cell.pencil {
-      background-color: #e6f4ea;
-      /* 밝은 연두색 */
-      color: #1b4d24;
-      /* 어두운 초록 */
-    }
-
-    .cell.error {
-      background-color: #fdd;
-      /* 연한 빨간색 */
-      border-color: #e00;
-      color: #a00;
-    }
-
-    .pencil span {
-      position: absolute;
-      font-size: 14px;
-      width: 16px;
-      height: 16px;
-      text-align: center;
-      line-height: 16px;
-      user-select: none;
-      color: #1b4d24;
-    }
-
-    .value {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-      font-size: 22px;
-    }
-
-    .cell[contenteditable="true"] {
-      outline: 2px solid #4caf50;
-      cursor: text;
-      user-select: text;
-    }
-
-    .value[contenteditable="true"] {
-      outline: 2px solid #4caf50;
-      cursor: text;
-      user-select: text;
-    }
-
-    .z_footer_copyright {
-      position: absolute;
-      right: 20px;
-      bottom: 20px;
-      font-size: 12px;
-      color: #393939;
-      text-align: end;
-    }
-
-    .powered-link {
-      color: #5c6ac4;
-      text-decoration: none;
-      transition: color 0.3s ease;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
@@ -170,10 +21,29 @@
       <option value="expert">전문가</option>
       <option value="evil">악마</option>
     </select>
+        
     <button onclick="generateSudoku()">새 퍼즐 생성</button>
+<label class="switch">
+    <span class="label-text">가이드</span>
+  <input type="checkbox" id="guide-toggle" checked />
+  <span class="slider"></span>
+
+</label>
   </div>
 
   <div class="sudoku-board" id="board"></div>
+
+  <div id="pencil-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-label" aria-describedby="modal-desc">
+  <div class="modal-content">
+    <h2 id="modal-label">메모 입력 (예: 137)</h2>
+    <input type="text" id="pencil-input" maxlength="9" autocomplete="off" />
+    <div class="modal-buttons">
+      <button id="modal-ok" class="btn-primary">확인</button>
+      <button id="modal-cancel" class="btn-secondary">취소</button>
+    </div>
+  </div>
+</div>
+
 
   <div class="z_footer_copyright">
     Powered by
@@ -224,92 +94,113 @@
     }
 
     function handleLeftClick(e, cell) {
-      if (cell.classList.contains('fixed')) return;
+  if (cell.classList.contains('fixed')) return;
 
-      // 📌 valueDiv가 없으면 생성
-      let valueDiv = cell.querySelector('.value');
-      if (!valueDiv) {
-        valueDiv = document.createElement('div');
-        valueDiv.classList.add('value');
-        cell.appendChild(valueDiv);
-      }
+  // 📌 valueDiv가 없으면 생성
+  let valueDiv = cell.querySelector('.value');
+  if (!valueDiv) {
+    valueDiv = document.createElement('div');
+    valueDiv.classList.add('value');
+    cell.appendChild(valueDiv);
+  }
 
-      if (valueDiv.isContentEditable) return;
+  if (valueDiv.isContentEditable) return;
 
-      valueDiv.setAttribute('contenteditable', 'true');
-      valueDiv.focus();
-      selectAllText(valueDiv);
+  valueDiv.setAttribute('contenteditable', 'true');
+  valueDiv.focus();
+  selectAllText(valueDiv);
 
-      const finishEdit = () => {
-        let text = valueDiv.textContent.trim();
-        if (text === '' || !/^[1-9]$/.test(text)) {
-          valueDiv.textContent = '';
-          cell.classList.remove('user-input');
-        } else {
-          valueDiv.textContent = text;
-          cell.classList.add('user-input');
-        }
-        valueDiv.removeAttribute('contenteditable');
-        valueDiv.removeEventListener('blur', finishEdit);
-        valueDiv.removeEventListener('keydown', onKeyDown);
-        saveProgressToLocal(); // ⬅️ 입력 저장
-        validateBoard();
-        saveAfterChange();
-      };
-
-      const onKeyDown = (evt) => {
-        if (evt.key === 'Enter') {
-          evt.preventDefault();
-          finishEdit();
-          cell.focus();
-        }
-      };
-
-      valueDiv.addEventListener('blur', finishEdit);
-      valueDiv.addEventListener('keydown', onKeyDown);
-
-      // 기존 펜슬 마크 제거
-      clearPencilNotes(cell);
-      cell.classList.remove('pencil');
+  // 👉 실시간 필터링: 숫자 1개만 입력되도록
+  const onInput = () => {
+    const clean = valueDiv.textContent.replace(/[^1-9]/g, '');
+    if (clean.length > 1) {
+      valueDiv.textContent = clean.charAt(0);
+      placeCaretAtEnd(valueDiv);
+    } else {
+      valueDiv.textContent = clean;
     }
+  };
+
+  // 👉 입력 완료 시 처리
+  const finishEdit = () => {
+    const text = valueDiv.textContent.trim();
+    if (/^[1-9]$/.test(text)) {
+      valueDiv.textContent = text;
+      cell.classList.add('user-input');
+    } else {
+      valueDiv.textContent = '';
+      cell.classList.remove('user-input');
+    }
+
+    valueDiv.removeAttribute('contenteditable');
+    valueDiv.removeEventListener('input', onInput);
+    valueDiv.removeEventListener('blur', finishEdit);
+    valueDiv.removeEventListener('keydown', onKeyDown);
+
+    clearPencilNotes(cell);
+    cell.classList.remove('pencil');
+
+    saveProgressToLocal();
+    validateBoard();
+    saveAfterChange();
+    updatePencilGuide?.(guideToggle?.checked); // 가이드 갱신 (선택적)
+  };
+
+  const onKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      finishEdit();
+      cell.focus();
+    }
+  };
+
+  valueDiv.addEventListener('input', onInput);
+  valueDiv.addEventListener('blur', finishEdit);
+  valueDiv.addEventListener('keydown', onKeyDown);
+}
+
 
 
     // 오른쪽 클릭 - 펜슬 모드 입력 (prompt)
     function handleRightClick(e, cell) {
-      if (cell.classList.contains('fixed')) return;
+  if (cell.classList.contains('fixed')) return;
 
-      const input = prompt('메모 입력 (예: 137)');
-      if (input === null) return;
+  openPencilModal((input) => {
+    if (input === null) return;
 
-      const digits = input.replace(/[^1-9]/g, '');
-      clearPencilNotes(cell);
-      cell.classList.remove('user-input');
+    const digits = input.replace(/[^1-9]/g, '');
+    clearPencilNotes(cell);
+    cell.classList.remove('user-input');
 
-      // 기존 .value 요소는 유지하고 내용만 초기화
-      let valueDiv = cell.querySelector('.value');
-      if (!valueDiv) {
-        valueDiv = document.createElement('div');
-        valueDiv.classList.add('value');
-        cell.appendChild(valueDiv);
-      }
-      valueDiv.textContent = '';
-
-      if (digits.length > 0) {
-        cell.classList.add('pencil');
-        for (let char of digits) {
-          const n = parseInt(char) - 1;
-          const mark = document.createElement('span');
-          mark.style.left = `${(n % 3) * 16}px`;
-          mark.style.top = `${Math.floor(n / 3) * 16}px`;
-          mark.textContent = char;
-          cell.appendChild(mark);
-        }
-      } else {
-        cell.classList.remove('pencil');
-      }
-      validateBoard();
-      saveAfterChange();
+    let valueDiv = cell.querySelector('.value');
+    if (!valueDiv) {
+      valueDiv = document.createElement('div');
+      valueDiv.classList.add('value');
+      cell.appendChild(valueDiv);
     }
+    valueDiv.textContent = '';
+
+    if (digits.length > 0) {
+      cell.classList.add('pencil');
+      for (let char of digits) {
+        const n = parseInt(char) - 1;
+        const mark = document.createElement('span');
+        mark.style.left = `${(n % 3) * 16}px`;
+        mark.style.top = `${Math.floor(n / 3) * 16}px`;
+        mark.textContent = char;
+        cell.appendChild(mark);
+      }
+    } else {
+      cell.classList.remove('pencil');
+    }
+    validateBoard();
+    saveAfterChange();
+
+      // 여기서 메모 가이드 상태에 따른 중복 표시 갱신
+    updatePencilGuide(guideToggle.checked);
+  });
+}
+
 
 
     function clearPencilNotes(cell) {
@@ -686,7 +577,6 @@
     }
 
 
-    // 값 변경 시 상태 저장 (handleLeftClick, handleRightClick 등 입력 함수 안에 호출)
     function saveAfterChange() {
       saveState();
     }
@@ -715,11 +605,201 @@
       }
     });
 
+    function openPencilModal(callback) {
+  const modal = document.getElementById('pencil-modal');
+  const input = document.getElementById('pencil-input');
+  const okBtn = document.getElementById('modal-ok');
+  const cancelBtn = document.getElementById('modal-cancel');
+
+  modal.classList.remove('hidden');
+  input.value = '';
+  input.focus();
+
+  const handleOk = () => {
+    cleanup();
+    callback(input.value);
+     updatePencilGuide(guideToggle.checked);
+     console.log(guideToggle.checked)
+  };
+
+  const handleCancel = () => {
+    cleanup();
+    callback(null);
+  };
+
+  const handleKey = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleOk();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      handleCancel();
+    }
+  };
+
+  const cleanup = () => {
+    modal.classList.add('hidden');
+    okBtn.removeEventListener('click', handleOk);
+    cancelBtn.removeEventListener('click', handleCancel);
+    document.removeEventListener('keydown', handleKey);
+  };
+
+  okBtn.addEventListener('click', handleOk);
+  cancelBtn.addEventListener('click', handleCancel);
+  document.addEventListener('keydown', handleKey);
+}
+
+
+const guideToggle = document.getElementById('guide-toggle');
+
+function loadGuideToggleState() {
+  const saved = localStorage.getItem('sudoku-guide-toggle');
+  if (saved === 'off') {
+    guideToggle.checked = false;
+  } else {
+    guideToggle.checked = true; // 기본 ON
+  }
+  updatePencilGuide?.(guideToggle.checked);
+}
+
+
+guideToggle.addEventListener('change', () => {
+  const state = guideToggle.checked ? 'on' : 'off';
+  localStorage.setItem('sudoku-guide-toggle', state);
+  updatePencilGuide?.(guideToggle.checked);
+  validatePencilNotes();
+});
+
+function validatePencilNotes() {
+  const guideOn = guideToggle.checked;
+  const cells = boardElement.querySelectorAll('.cell');
+
+  // 1) 현재 보드에서 확정값 수집
+  // 확정값 배열 (9x9) - fixed 또는 user-input 숫자
+  const confirmed = Array.from({ length: 9 }, () => Array(9).fill(null));
+  cells.forEach((cell, idx) => {
+    const row = Math.floor(idx / 9);
+    const col = idx % 9;
+    if (cell.classList.contains('fixed') || cell.classList.contains('user-input')) {
+      const val = cell.querySelector('.value')?.textContent.trim();
+      if (/^[1-9]$/.test(val)) {
+        confirmed[row][col] = val;
+      }
+    }
+  });
+
+  // 2) 가이드 ON인 경우 펜슬 숫자 중 실제 불가능한 숫자 빨간색 표시
+  cells.forEach((cell, idx) => {
+    if (!cell.classList.contains('pencil')) {
+      // 펜슬 없는 셀은 빨간 표시 제거
+      cell.querySelectorAll('span').forEach(span => {
+        span.style.color = '';
+      });
+      return;
+    }
+    const row = Math.floor(idx / 9);
+    const col = idx % 9;
+
+    cell.querySelectorAll('span').forEach(span => {
+      const digit = span.textContent;
+      if (!guideOn) {
+        // 가이드 OFF면 색상 초기화
+        span.style.color = '';
+        return;
+      }
+
+      // digit이 확정값과 중복인지 검사 (같은 행, 열, 블록 확인)
+      const conflict = isDigitConflict(confirmed, row, col, digit);
+
+      if (conflict) {
+        span.style.color = 'red';
+      } else {
+        span.style.color = '';
+      }
+    });
+  });
+}
+
+// 확정값 배열 기준으로 digit이 row, col 위치에서 쓸 수 없는 숫자인지 검사
+function isDigitConflict(confirmed, row, col, digit) {
+  // 행 검사
+  for (let c = 0; c < 9; c++) {
+    if (c !== col && confirmed[row][c] === digit) return true;
+  }
+  // 열 검사
+  for (let r = 0; r < 9; r++) {
+    if (r !== row && confirmed[r][col] === digit) return true;
+  }
+  // 3x3 블록 검사
+  const startRow = Math.floor(row / 3) * 3;
+  const startCol = Math.floor(col / 3) * 3;
+  for (let r = startRow; r < startRow + 3; r++) {
+    for (let c = startCol; c < startCol + 3; c++) {
+      if ((r !== row || c !== col) && confirmed[r][c] === digit) return true;
+    }
+  }
+  return false;
+}
+
+
+function updatePencilGuide(isGuideOn) {
+  const cells = boardElement.querySelectorAll('.cell');
+
+  cells.forEach(cell => {
+    // 일단 기존 빨간색 표시 초기화
+    const pencilSpans = cell.querySelectorAll('span');
+    pencilSpans.forEach(span => {
+      span.style.color = ''; // 기본 색상으로 초기화
+    });
+
+    if (!isGuideOn) return; // 가이드 꺼져있으면 빨간색 표시 안함
+
+    if (!cell.classList.contains('pencil')) return;
+
+    // 현재 셀에 적힌 펜슬 숫자들
+    const pencilNums = Array.from(pencilSpans).map(s => s.textContent);
+
+    // 해당 숫자들 중에 실제 보드 내에서 중복된 숫자를 빨간색으로 표시해야 함
+    // 중복된 숫자 구하기 위해 보드 전체 펜슬 숫자 카운트 계산
+
+    // 모든 셀의 펜슬 숫자와 위치 수집
+    const pencilMap = new Map(); // 숫자 => 배열[셀]
+
+    cells.forEach(c => {
+      if (!c.classList.contains('pencil')) return;
+      const spans = c.querySelectorAll('span');
+      spans.forEach(s => {
+        const num = s.textContent;
+        if (!pencilMap.has(num)) pencilMap.set(num, []);
+        pencilMap.get(num).push(s);
+      });
+    });
+
+    // 해당 숫자가 2개 이상이면 중복
+    pencilNums.forEach(num => {
+      const arr = pencilMap.get(num);
+      if (arr && arr.length > 1) {
+        // 이 숫자는 중복된 숫자이므로 이 셀 내에서 빨간색으로 표시
+        pencilSpans.forEach(span => {
+          if (span.textContent === num) {
+            span.style.color = 'red';
+          }
+        });
+      }
+    });
+  });
+}
+
+
+
     window.addEventListener('DOMContentLoaded', () => {
       if (!loadPuzzleFromQuery()) {
         generateSudoku();
       }
+      validatePencilNotes();
+      loadGuideToggleState();
       saveState(); // 초기 상태 저장 필수!
+      validateBoard();
     });
   </script>
 

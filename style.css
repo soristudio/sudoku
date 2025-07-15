@@ -1,0 +1,320 @@
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f5f6fa;
+      color: #333;
+      margin: 0;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 {
+      margin-bottom: 0.5rem;
+    }
+
+    .meta {
+      margin-bottom: 1rem;
+      color: #666;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    select,
+    button {
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      background-color: #fff;
+      transition: all 0.2s;
+    }
+
+    button:hover {
+      background-color: #eee;
+    }
+
+    .sudoku-board {
+      display: grid;
+      grid-template-columns: repeat(9, 50px);
+      grid-template-rows: repeat(9, 50px);
+      gap: 1px;
+      border: 2px solid #666;
+    }
+
+    .cell {
+      width: 50px;
+      height: 50px;
+      border: 1px solid #999;
+      text-align: center;
+      vertical-align: middle;
+      font-size: 22px;
+      box-sizing: border-box;
+      position: relative;
+      user-select: none;
+      background-color: #fff;
+      color: #000;
+      cursor: pointer;
+    }
+
+    .cell.block-light {
+      background-color: #e1e1e1;
+    }
+
+    .cell.block-dark {
+      background-color: #ffffff;
+    }
+
+    .cell.fixed {
+      font-weight: bold;
+      color: #000;
+      pointer-events: none;
+    }
+
+    .cell.user-input {
+      background-color: #fff9db;
+      color: #7a5901;
+    }
+
+    .cell.pencil {
+      background-color: #e6f4ea;
+      color: #1b4d24;
+    }
+
+    .cell.error {
+      background-color: #fdd;
+      border-color: #e00;
+      color: #a00;
+    }
+
+    .pencil span {
+      position: absolute;
+      font-size: 14px;
+      width: 16px;
+      height: 16px;
+      text-align: center;
+      line-height: 16px;
+      user-select: none;
+      color: #1b4d24;
+    }
+
+    .value {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      font-size: 22px;
+    }
+
+    .cell[contenteditable="true"] {
+      outline: 2px solid #4caf50;
+      cursor: text;
+      user-select: text;
+    }
+
+@keyframes greenBlink {
+  0%, 100% {
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0);
+  }
+  50% {
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.8);
+  }
+}
+
+.value[contenteditable="true"] {
+    width: 1.5rem;
+  outline: none;       /* 기존 outline 제거 */
+  cursor: text;
+  user-select: text;
+  animation: greenBlink 1.2s infinite;
+  border-radius: 4px;
+  padding: 2px 4px;    /* 약간의 여백으로 더 깔끔하게 */
+  background-color: #e8f5e9; /* 연한 연두 배경으로 포커스 느낌 */
+}
+
+    .z_footer_copyright {
+      position: absolute;
+      right: 20px;
+      bottom: 20px;
+      font-size: 12px;
+      color: #393939;
+      text-align: end;
+    }
+
+    .powered-link {
+      color: #5c6ac4;
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+
+
+
+.pencil .invalid-note {
+  color: red;
+  opacity: 0.8;
+}
+
+  .switch {
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+    gap: 8px;
+  }
+
+  /* 숨기는 기본 체크박스 */
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+  }
+
+  /* 스위치 배경 */
+  .slider {
+    position: relative;
+    width: 50px;
+    height: 26px;
+    background-color: #ccc;
+    border-radius: 13px;
+    transition: background-color 0.3s ease;
+  }
+
+  /* 슬라이더 (원) */
+  .slider::before {
+    content: "";
+    position: absolute;
+    height: 22px;
+    width: 22px;
+    left: 2px;
+    top: 2px;
+    background-color: white;
+    border-radius: 50%;
+    transition: transform 0.3s ease;
+  }
+
+  /* 체크 되었을 때 배경 색 변경 */
+  .switch input:checked + .slider {
+    background-color: #4f46e5; /* 보라색 */
+  }
+
+  /* 체크 되었을 때 슬라이더 위치 이동 */
+  .switch input:checked + .slider::before {
+    transform: translateX(24px);
+  }
+
+  /* 오른쪽 텍스트 */
+  .label-text {
+    margin-left: 12px;
+    font-weight: 500;
+    color: #333;
+    user-select: text;
+  }
+
+
+    /* 모달 배경 */
+  .modal {
+    position: fixed;
+    inset: 0; /* top:0; right:0; bottom:0; left:0; */
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    transition: opacity 0.25s ease;
+  }
+
+  .hidden {
+    display: none;
+  }
+
+  /* 모달 콘텐츠 박스 */
+  .modal-content {
+    background: white;
+    border-radius: 0.5rem;
+    padding: 1.5rem 2rem;
+    width: 320px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+
+  /* 제목 */
+  .modal-content h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #1e293b; /* 다크 블루 그레이 */
+  }
+
+  /* 입력창 */
+  #pencil-input {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1.5px solid #cbd5e1; /* 연한 회색 */
+    border-radius: 0.375rem;
+    font-size: 1rem;
+    outline-offset: 2px;
+    transition: border-color 0.2s ease;
+    box-sizing: border-box;
+  }
+
+  #pencil-input:focus {
+    border-color: #4f46e5; /* 보라색 */
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.3);
+  }
+
+  /* 버튼 컨테이너 */
+  .modal-buttons {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+  }
+
+  /* 공통 버튼 스타일 */
+  .modal-buttons button {
+    padding: 0.5rem 1.25rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.2s ease;
+  }
+
+  /* 확인 버튼 (Primary) */
+  .btn-primary {
+    background-color: #4f46e5;
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background-color: #4338ca;
+  }
+
+  .btn-primary:focus-visible {
+    outline: 3px solid #a5b4fc;
+    outline-offset: 2px;
+  }
+
+  /* 취소 버튼 (Secondary) */
+  .btn-secondary {
+    background-color: #e2e8f0; /* 연한 회색 */
+    color: #334155; /* 짙은 회색 */
+  }
+
+  .btn-secondary:hover {
+    background-color: #cbd5e1;
+  }
+
+  .btn-secondary:focus-visible {
+    outline: 3px solid #a5b4fc;
+    outline-offset: 2px;
+  }
