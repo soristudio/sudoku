@@ -31,6 +31,7 @@
 </label>
   </div>
 
+
   <div class="sudoku-board" id="board"></div>
 
   <div id="pencil-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-label" aria-describedby="modal-desc">
@@ -43,7 +44,6 @@
     </div>
   </div>
 </div>
-
 
   <div class="z_footer_copyright">
     Powered by
@@ -163,43 +163,53 @@
 
     // 오른쪽 클릭 - 펜슬 모드 입력 (prompt)
     function handleRightClick(e, cell) {
-  if (cell.classList.contains('fixed')) return;
+if (cell.classList.contains('fixed')) return;
 
-  openPencilModal((input) => {
-    if (input === null) return;
+openPencilModal((input) => {
+  if (input === null) return;
 
-    const digits = input.replace(/[^1-9]/g, '');
-    clearPencilNotes(cell);
-    cell.classList.remove('user-input');
+  const digits = input.replace(/[^1-9]/g, '');
+  clearPencilNotes(cell);
+  cell.classList.remove('user-input');
 
-    let valueDiv = cell.querySelector('.value');
-    if (!valueDiv) {
-      valueDiv = document.createElement('div');
-      valueDiv.classList.add('value');
-      cell.appendChild(valueDiv);
+  let valueDiv = cell.querySelector('.value');
+  if (!valueDiv) {
+    valueDiv = document.createElement('div');
+    valueDiv.classList.add('value');
+    cell.appendChild(valueDiv);
+  }
+  valueDiv.textContent = '';
+
+  if (digits.length > 0) {
+    cell.classList.add('pencil');
+
+    const SLOT_SIZE = 100 / 3;             // 33.33...%
+    const HALF_SLOT = SLOT_SIZE / 2;       // 중앙 정렬용
+    const TOP_BIAS = 0;                    // 상단 보정용 (퍼센트 단위)
+
+    for (let char of digits) {
+      const n = parseInt(char) - 1;
+      const mark = document.createElement('span');
+      mark.textContent = char;
+
+      // 위치 계산 (왼쪽, 위쪽 모두 중앙 기준 + 보정)
+      mark.style.left = `${(n % 3) * SLOT_SIZE + HALF_SLOT}%`;
+      mark.style.top = `${Math.floor(n / 3) * SLOT_SIZE + HALF_SLOT + TOP_BIAS}%`;
+      mark.style.transform = 'translate(-50%, -50%)';
+
+      cell.appendChild(mark);
     }
-    valueDiv.textContent = '';
+  } else {
+    cell.classList.remove('pencil');
+  }
 
-    if (digits.length > 0) {
-      cell.classList.add('pencil');
-      for (let char of digits) {
-        const n = parseInt(char) - 1;
-        const mark = document.createElement('span');
-        mark.style.left = `${(n % 3) * 16}px`;
-        mark.style.top = `${Math.floor(n / 3) * 16}px`;
-        mark.textContent = char;
-        cell.appendChild(mark);
-      }
-    } else {
-      cell.classList.remove('pencil');
+  validateBoard();
+  saveAfterChange();
+
+  // 여기서 메모 가이드 상태에 따른 중복 표시 갱신
+  updatePencilGuide(guideToggle.checked);
+});
     }
-    validateBoard();
-    saveAfterChange();
-
-      // 여기서 메모 가이드 상태에 따른 중복 표시 갱신
-    updatePencilGuide(guideToggle.checked);
-  });
-}
 
 
 
@@ -789,6 +799,21 @@ function updatePencilGuide(isGuideOn) {
     });
   });
 }
+
+
+let currentScale = 1;
+
+function changeScale(delta) {
+  currentScale = Math.min(2, Math.max(0.5, currentScale + delta)); // 최소 50%, 최대 200%
+  const container = document.body; // 또는 .game-container 같은 전체 요소
+  container.style.transform = `scale(${currentScale})`;
+  container.style.transformOrigin = 'top center';
+  document.getElementById('scale-display').textContent = `${Math.round(currentScale * 100)}%`;
+
+  // 선택사항: 로컬 저장
+  localStorage.setItem('sudokuScale', currentScale);
+}
+
 
 
 
